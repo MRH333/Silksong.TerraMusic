@@ -260,6 +260,40 @@ namespace SilksongCustomAudio
         {
             if (CustomAudio.AudioDictionary.TryGetValue(audioName, out AudioClip clip))
             {
+                //检查是否已存在相同音频的AudioSource
+                if (customAudioSources.TryGetValue(audioName, out AudioSource existingSource))
+                {
+                    if (existingSource != null)
+                    {
+                        if (existingSource.isPlaying)
+                        {
+                            CustomAudio.staticLogger?.LogInfo($"音频已在播放：{audioName}");
+                            return;
+                        }
+
+                        existingSource.clip = clip;
+                        existingSource.loop = true;
+                        
+                        if (fadeTime > 0)
+                        {
+                            AudioFader.FadeIn(existingSource, fadeTime);
+                        }
+                        else
+                        {
+                            existingSource.volume = 1f;
+                            existingSource.Play();
+                        }
+
+                        CustomAudio.staticLogger?.LogInfo($"重新播放自制音频：{audioName}");
+                        return;
+                    }
+                    else
+                    {
+                        //清除无效引用
+                        customAudioSources.Remove(audioName);
+                    }
+                }
+
                 //创建一个新的AudioSource来播放自定义音频
                 GameObject audioObject = new GameObject($"BossAudio_{audioName}");
                 AudioSource source = audioObject.AddComponent<AudioSource>();
@@ -356,6 +390,30 @@ namespace SilksongCustomAudio
             {
                 customAudioSources.Remove(key);
             }
+        }
+
+        //+++++重置状态功能+++++
+        public static void ResetBossState(string bossName)
+        {
+            if (bossStates.TryGetValue(bossName, out var state))
+            {
+                state.CurrentPhase = "Phase 1";
+                state.Variables.Clear();
+                state.IsAudioSwitching = false;
+
+                CustomAudio.staticLogger?.LogInfo($"重置Boss状态：{bossName}");
+            }
+        }
+        public static void ResetAllBossStates()
+        {
+            foreach (var kvp in bossStates)
+            {
+                kvp.Value.CurrentPhase = "Phase 1";
+                kvp.Value.Variables.Clear();
+                kvp.Value.IsAudioSwitching = false;
+            }
+
+            CustomAudio.staticLogger?.LogInfo("重置所有Boss状态");
         }
     }
 }

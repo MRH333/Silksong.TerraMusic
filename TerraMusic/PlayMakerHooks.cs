@@ -41,20 +41,20 @@ namespace SilksongCustomAudio
             }
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(SetFloatValue), "OnEnter")]
-        private static void SetFloatValue_OnEnter_Postfix(SetFloatValue __instance)
-        {
-            string bossName = DetectBossName(__instance.Fsm);
-            if (!string.IsNullOrEmpty(bossName))
-            {
-                BossAudioManager.OnVariableChanged(
-                    bossName,
-                    __instance.floatVariable.Name,
-                    __instance.floatValue.Value
-                    );
-            }
-        }
+        //[HarmonyPostfix]
+        //[HarmonyPatch(typeof(SetFloatValue), "OnEnter")]
+        //private static void SetFloatValue_OnEnter_Postfix(SetFloatValue __instance)
+        //{
+        //    string bossName = DetectBossName(__instance.Fsm);
+        //    if (!string.IsNullOrEmpty(bossName))
+        //    {
+        //        BossAudioManager.OnVariableChanged(
+        //            bossName,
+        //            __instance.floatVariable.Name,
+        //            __instance.floatValue.Value
+        //            );
+        //    }
+        //}
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(SendEventByName), "OnEnter")]
@@ -75,21 +75,18 @@ namespace SilksongCustomAudio
             //场景切换时停止所有自制音频
             BossAudioManager.StopAllCustomAudio(0.5f);
             BossAudioManager.CleanupInvalidSources();
+            //切换场景时重置
+            CustomAudio.staticLogger?.LogInfo("场景已切换，重置状态");
+            BossAudioManager.ResetAllBossStates();
         }
 
         //[HarmonyPostfix]
-        //[HarmonyPatch(typeof(CompareHPBool), "OnEnter")]
-        //private static void CompareHPBool_OnEnter_Postfix(CompareHPBool __instance)
+        //[HarmonyPatch(typeof(BossSceneController), "Awake")]
+        //private static void BossSceneController_Awake_Postfix(BossSceneController __instance)
         //{
-        //    if (__instance.lessThanBool.Name == "Under HP Check" &&
-        //        __instance.lessThanBool.Value == true)
-        //    {
-        //        CustomAudio.staticLogger?.LogInfo("失心蕾丝已触发低血量检测");
-
-        //        //切换到Phase 2音频
-        //        BossAudioManager.OnVariableChanged("Lost Lace", "Under HP Check", true);
-        //        BossAudioManager.OnVariableChanged("Lost Lace", "Phase 2", true);
-        //    }
+        //    //Boss场景开始时重置
+        //    CustomAudio.staticLogger?.LogInfo("Boss场景开始，重置状态");
+        //    BossAudioManager.ResetAllBossStates();
         //}
 
         private static string DetectBossName(Fsm fsm)
