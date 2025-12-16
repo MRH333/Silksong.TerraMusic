@@ -60,7 +60,7 @@ namespace SilksongCustomAudio
             while (timer < duration)
             {
                 timer += Time.deltaTime;
-                source.volume = Mathf.Lerp(source.volume, 0f, timer / duration);
+                source.volume = Mathf.Lerp(startVolume, 0f, timer / duration);
                 yield return null;
             }
             source.Stop();

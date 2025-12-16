@@ -57,6 +57,10 @@ namespace SilksongCustomAudio
             public bool IsAudioSwitching { get; set; }
         }
 
+        //+++++添加跟踪自制音频的字典++++++
+        private static readonly Dictionary<string, AudioSource> customAudioSources = new Dictionary<string, AudioSource>();
+        //+++++++++++++++++++++++++
+
         ///<summary>
         ///初始化管理器
         ///</summary>
@@ -91,12 +95,12 @@ namespace SilksongCustomAudio
                                 VariableName = "Phase 2",
                                 TargetValue = true,
                             },
-                            new TriggerCondition()
-                            {
-                                Type = ConditionType.BoolVariableSet,
-                                VariableName = "Under HP Check",
-                                TargetValue = true,
-                            }
+                            //new TriggerCondition()
+                            //{
+                            //    Type = ConditionType.BoolVariableSet,
+                            //    VariableName = "Under HP Check",
+                            //    TargetValue = true,
+                            //}
                         }
                     }
                 }
@@ -262,6 +266,10 @@ namespace SilksongCustomAudio
                 source.clip = clip;
                 source.loop = true;
 
+                //+++++记录自制音频源+++++
+                customAudioSources[audioName] = source;
+                //++++++++++++++++++++
+
                 if (fadeTime > 0)
                 {
                     AudioFader.FadeIn(source, fadeTime);//使用改进的淡入
@@ -312,6 +320,42 @@ namespace SilksongCustomAudio
             source.clip = clip;
             source.loop = true;
             return source;
+        }
+
+        //+++++停止自制音频、清理无效音频源功能+++++
+        public static void StopAllCustomAudio(float fadeTime = 0.5f)
+        {
+            foreach (var kvp in customAudioSources.ToList())
+            {
+                if (kvp.Value != null && kvp.Value.isPlaying)
+                {
+                    if (fadeTime > 0)
+                    {
+                        AudioFader.FadeOut(kvp.Value, fadeTime);
+                    }
+                    else
+                    {
+                        kvp.Value.Stop();
+                    }
+                    CustomAudio.staticLogger?.LogInfo($"停止自制音频：{kvp.Key}");
+                }
+            }
+        }
+
+        public static void CleanupInvalidSources()
+        {
+            var keysToRemove = new List<string>();
+            foreach (var kvp in customAudioSources)
+            {
+                if (kvp.Value == null)
+                {
+                    keysToRemove.Add(kvp.Key);
+                }
+            }
+            foreach (var key in keysToRemove)
+            {
+                customAudioSources.Remove(key);
+            }
         }
     }
 }
