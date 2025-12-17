@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using WavLib;
 
 namespace SilksongCustomAudio
@@ -110,13 +111,30 @@ namespace SilksongCustomAudio
         /// </summary>
         private static bool TryReplaceAudio(AudioSource source, out AudioClip replacementClip)
         {
-            if (source?.clip != null &&
-                AudioDictionary.TryGetValue(source.clip.name, out replacementClip))
+            //先尝试场景特定音频
+            replacementClip = null;
+            if (source?.clip == null) return false;
+
+            string originalName = source.clip.name;
+            string currentScene = SceneManager.GetActiveScene().name;
+
+            if (!string.IsNullOrEmpty(currentScene))
+            {
+                string sceneSpecificName = $"{originalName}_{currentScene}";
+                if (AudioDictionary.TryGetValue(sceneSpecificName, out replacementClip))
+                {
+                    staticLogger?.LogInfo($"使用场景特定音频：{sceneSpecificName}");
+                    return true;
+                }
+            }
+            
+            
+            //再尝试通用音频
+            if (AudioDictionary.TryGetValue(source.clip.name, out replacementClip))
             {
                 return true;
             }
 
-            replacementClip = null;
             return false;
         }
 
@@ -125,13 +143,27 @@ namespace SilksongCustomAudio
         /// </summary>
         private static bool TryReplaceAudio(AudioClip originalClip, out AudioClip replacementClip)
         {
-            if (originalClip != null &&
-                AudioDictionary.TryGetValue(originalClip.name, out replacementClip))
+            replacementClip = null;
+            if (originalClip == null) return false;
+
+            string originalName = originalClip.name;
+            string currentScene = SceneManager.GetActiveScene().name;
+
+            if (!string.IsNullOrEmpty(currentScene))
+            {
+                string sceneSpecificName = $"{originalName}_{currentScene}";
+                if (AudioDictionary.TryGetValue(sceneSpecificName, out replacementClip))
+                {
+                    staticLogger?.LogInfo($"使用场景特定音频：{sceneSpecificName}");
+                    return true;
+                }
+            }
+
+            if (AudioDictionary.TryGetValue(originalClip.name, out replacementClip))
             {
                 return true;
             }
 
-            replacementClip = null;
             return false;
         }
 

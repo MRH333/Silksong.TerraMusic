@@ -2,7 +2,9 @@
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SilksongCustomAudio
 {
@@ -32,12 +34,6 @@ namespace SilksongCustomAudio
                     __instance.boolVariable.Name,
                     __instance.boolValue.Value
                     );
-
-                //如果进入Pause 3，停止所有自制音频
-                if (__instance.boolVariable.Name == "Pause 3" && __instance.boolVariable.Value == true)
-                { 
-                    BossAudioManager.StopAllCustomAudio(1.0f); 
-                }
             }
         }
 
@@ -60,12 +56,34 @@ namespace SilksongCustomAudio
         [HarmonyPatch(typeof(SendEventByName), "OnEnter")]
         private static void SendEventByName_OnEnter_Postfix(SendEventByName __instance)
         {
-            //当发送STOP事件时淡出音频
-            if (__instance.sendEvent.Value == "STOP")
+            //当选定boss的FSM发送STOP事件时淡出音频
+            string bossName = DetectBossName( __instance.Fsm);
+            if (!string.IsNullOrEmpty(bossName))
             {
-                CustomAudio.staticLogger?.LogInfo("检测到STOP事件，触发音频淡出");
-                BossAudioManager.StopAllCustomAudio(0.5f);
+                if (__instance.sendEvent.Value == "STOP")
+                {
+                    CustomAudio.staticLogger?.LogInfo("检测到STOP事件，触发音频淡出");
+                    BossAudioManager.StopAllCustomAudio(0.5f);
+
+                    //当选定boss是Lost Lace时有特殊逻辑
+                    if (bossName == "Lost Lace")
+                    {
+                        CustomAudio.staticLogger?.LogInfo($"检测到Lost Lace的STOP，提前播放Phase 3音频");
+
+                        //延迟一小会确保Phase 2音频完全停止
+                        var gameManager = UnityEngine.Object.FindObjectOfType<GameManager>();
+                        if (gameManager != null)
+                        {
+                            gameManager.StartCoroutine(DelayedPhase3Audio(0.2f, bossName));
+                        }
+                    }
+                }
             }
+        }
+        private static IEnumerator DelayedPhase3Audio(float delay, string bossName)
+        {
+            yield return new WaitForSeconds(delay);
+            BossAudioManager.PlayCustomAudio("CalamitasPhase3", 0.5f);
         }
 
         [HarmonyPostfix]
@@ -80,14 +98,14 @@ namespace SilksongCustomAudio
             BossAudioManager.ResetAllBossStates();
         }
 
-        //[HarmonyPostfix]
-        //[HarmonyPatch(typeof(BossSceneController), "Awake")]
-        //private static void BossSceneController_Awake_Postfix(BossSceneController __instance)
-        //{
-        //    //Boss场景开始时重置
-        //    CustomAudio.staticLogger?.LogInfo("Boss场景开始，重置状态");
-        //    BossAudioManager.ResetAllBossStates();
-        //}
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(HealthManager), nameof(HealthManager.Die),
+            new Type[] { typeof(float?), typeof(AttackTypes), typeof(NailElements), typeof(GameObject), typeof(bool), typeof(float), typeof(bool), typeof(bool) })]
+        private static void HealthManager_Die_Postfix()
+        {
+            CustomAudio.staticLogger?.LogInfo("Boss被击败，停止自制音频");
+            BossAudioManager.StopAllCustomAudio(0.5f);
+        }
 
         private static string DetectBossName(Fsm fsm)
         {

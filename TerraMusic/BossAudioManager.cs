@@ -302,7 +302,7 @@ namespace SilksongCustomAudio
                 }
             }
         }
-        private static void PlayCustomAudio(string audioName, float fadeTime)
+        public static void PlayCustomAudio(string audioName, float fadeTime)
         {
             if (!CustomAudio.AudioDictionary.TryGetValue(audioName, out AudioClip clip))
             {
