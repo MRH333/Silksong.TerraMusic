@@ -358,11 +358,12 @@ namespace SilksongCustomAudio
             var audioInfo = new CustomAudioSourceInfo()
             {
                 Source = source,
-                BaseVolume = 1f,
+                BaseVolume = GameAudioEventListener.CurrentBaseVolume,//使用游戏音量
                 VolumeMultiplier = 1f,
             };
 
             customAudioSourceInfos[audioName] = audioInfo;
+            audioInfo.UpdateVolume();//立即应用音量
 
             if (fadeTime > 0)
             {

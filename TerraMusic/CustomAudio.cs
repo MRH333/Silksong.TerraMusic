@@ -30,8 +30,9 @@ namespace SilksongCustomAudio
             CreateCustomAudioDirectory();
             LoadAudio();
 
-            //初始化Boss音频管理器
+            //初始化Boss音频管理器与游戏音频事件监听器
             BossAudioManager.Initialize();
+            //GameAudioEventListener.Initialize();
 
             // 使用Harmony自动Patch所有标记的方法
             Harmony harmony = new Harmony("com.sonyo.customaudio");

@@ -69,7 +69,7 @@ namespace SilksongCustomAudio
 
         private static IEnumerator FadeInCoroutine(AudioSource source, float duration)
         {
-            float targetVolume = 1f;
+            float targetVolume = GameAudioEventListener.CurrentBaseVolume;
 
             if (!source.isPlaying)
             {

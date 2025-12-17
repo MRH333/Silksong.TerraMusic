@@ -48,6 +48,7 @@
     </Reference>
     <Reference Include="PlayMaker">
       <HintPath>..\..\..\SilkSongMod\Dependency\PlayMaker.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -323,7 +324,7 @@
     </Reference>
     <Reference Include="WavLib">
       <HintPath>..\..\..\SilkSongMod\Dependency\AdditionLib\WavLib.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

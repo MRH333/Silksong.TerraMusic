@@ -19,6 +19,9 @@ namespace SilksongCustomAudio
         private static float lastMusicVolume = 1f;
         private static float pauseVolumeMultiplier = 0.3f;//暂停时音量降低到30%
 
+        private static float currentBaseVolume = 1f;//新增：存储当前音量
+        public static float CurrentBaseVolume => currentBaseVolume;
+
         ///<summary>
         ///初始化事件监听
         ///</summary>
@@ -28,6 +31,9 @@ namespace SilksongCustomAudio
 
             //初始获取当前音量设置
             UpdateVolumeFromGameSettings();
+
+            UpdateCustomAudioVolumes();
+            CustomAudio.staticLogger?.LogInfo("初始音量已应用到自制音频");
         }
 
         //======功能1：角色死亡时停止======
@@ -44,7 +50,7 @@ namespace SilksongCustomAudio
         [HarmonyPatch(typeof(MenuAudioSlider), "SetMasterLevel")]
         private static void MenuAudioSlider_SetMasterLevel_Postfix(float masterLevel)
         {
-            lastMasterVolume = masterLevel / 10f;
+            lastMasterVolume = ConvertSliderToPerceivedVolume(masterLevel / 10f);
             CustomAudio.staticLogger?.LogInfo($"总音量变化：原始= {masterLevel}，转换后= {lastMasterVolume}");
             UpdateCustomAudioVolumes();
         }
@@ -53,9 +59,23 @@ namespace SilksongCustomAudio
         [HarmonyPatch(typeof(MenuAudioSlider), "SetMusicLevel")]
         private static void MenuAudioSlider_SetMusicLevel_Postfix(float musicLevel)
         {
-            lastMusicVolume = musicLevel / 10f;
+            lastMusicVolume = ConvertSliderToPerceivedVolume(musicLevel / 10f);
             CustomAudio.staticLogger?.LogInfo($"音乐音量变化：原始= {musicLevel}，转换后= {lastMusicVolume}");
             UpdateCustomAudioVolumes();
+        }
+
+        /// <summary>
+        /// 将滑动条值转换为感知音量（匹配游戏曲线）
+        /// </summary>
+        private static float ConvertSliderToPerceivedVolume(float normalizedValue)
+        {
+            if (normalizedValue < 0f) return 0f;
+            if (normalizedValue > 1f) return 1f;
+
+            float dB = Mathf.Lerp(-80f, 0f, Mathf.Sqrt(normalizedValue));
+            float linearFromDB = Mathf.Pow(10f, dB / 20f);
+
+            return linearFromDB;
         }
 
         //=====功能3：暂停游戏时音量变小======
@@ -121,11 +141,11 @@ namespace SilksongCustomAudio
 
                     if (masterField != null)
                     {
-                        lastMasterVolume = (float)masterField.GetValue(gameSettings) / 10f;
+                        lastMasterVolume = ConvertSliderToPerceivedVolume((float)masterField.GetValue(gameSettings) / 10f);
                     }
                     if (musicField != null)
                     {
-                        lastMusicVolume = (float)musicField.GetValue(gameSettings) / 10f;
+                        lastMusicVolume = ConvertSliderToPerceivedVolume((float)musicField.GetValue(gameSettings) / 10f);
                     }
 
                     CustomAudio.staticLogger?.LogInfo($"获取游戏音量设置：" +
@@ -148,11 +168,10 @@ namespace SilksongCustomAudio
         ///</summary>
         private static void UpdateCustomAudioVolumes()
         {
-            float finalVolume = lastMasterVolume * lastMusicVolume;
-            CustomAudio.staticLogger?.LogInfo($"计算最终音量：{lastMasterVolume}" +
-                $" * {lastMusicVolume} = {finalVolume}");
+            currentBaseVolume = lastMasterVolume * lastMusicVolume;
+            CustomAudio.staticLogger?.LogInfo($"更新存储的音量：{currentBaseVolume}");
 
-            BossAudioManager.SetAllCustomAudioBaseVolume(finalVolume);
+            BossAudioManager.SetAllCustomAudioBaseVolume(currentBaseVolume);
 
             //如果游戏暂停，应用暂停音量乘数
             if (isGamePaused)
