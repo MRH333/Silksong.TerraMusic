@@ -37,6 +37,8 @@ namespace SilksongCustomAudio
             harmony.PatchAll(typeof(CustomAudio));
             //额外Patch PlayMaker相关类
             harmony.PatchAll(typeof(PlayMakerHooks));
+
+            harmony.PatchAll(typeof(GameAudioEventListener));
         }
 
         /// <summary>

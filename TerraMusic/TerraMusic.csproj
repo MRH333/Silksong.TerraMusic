@@ -330,6 +330,7 @@
     <Compile Include="AudioFader.cs" />
     <Compile Include="BossAudioManager.cs" />
     <Compile Include="CustomAudio.cs" />
+    <Compile Include="GameAudioEventListener.cs" />
     <Compile Include="PlayMakerHooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -57,9 +57,55 @@ namespace SilksongCustomAudio
             public bool IsAudioSwitching { get; set; }
         }
 
-        //+++++添加跟踪自制音频的字典++++++
-        private static readonly Dictionary<string, AudioSource> customAudioSources = new Dictionary<string, AudioSource>();
-        //+++++++++++++++++++++++++
+        //+++++添加跟踪自制音频的字典（被自制音频信息字典更改）++++++
+        private static readonly Dictionary<string, CustomAudioSourceInfo> customAudioSourceInfos = new Dictionary<string, CustomAudioSourceInfo>();
+        //++++++自制音频信息（用于调节音量适配游戏）+++++
+        public class CustomAudioSourceInfo
+        {
+            public AudioSource Source { get; set; }
+            public float BaseVolume { get; set; } = 1f;//基础音量（基于游戏设置）
+            public float VolumeMultiplier { get; set; } = 1f;//音量乘数（用于暂停）
+
+            public void UpdateVolume()
+            {
+                if (Source != null)
+                {
+                    Source.volume = BaseVolume * VolumeMultiplier;
+                }
+            }
+        }
+        //添加音量控制方法
+        public static void SetAllCustomAudioBaseVolume(float volume)
+        {
+            foreach (var kvp in customAudioSourceInfos)
+            {
+                if (kvp.Value != null && kvp.Value.Source != null)
+                {
+                    kvp.Value.BaseVolume = volume;
+                    kvp.Value.UpdateVolume();
+                }
+            }
+        }
+        public static void SetAllCustomAudioVolumeMultiplier(float multiplier)
+        {
+            foreach (var kvp in customAudioSourceInfos)
+            {
+                if (kvp.Value != null && kvp.Value.Source != null)
+                {
+                    kvp.Value.VolumeMultiplier = multiplier;
+                    kvp.Value.UpdateVolume();
+                }
+            }
+        }
+        public static void SetCustomAudioBaseVolume(string audioName, float volume)
+        {
+            if (customAudioSourceInfos.TryGetValue(audioName, out var info) && info != null)
+            {
+                info.BaseVolume = volume;
+                info.UpdateVolume();
+            }
+        }
+        //+++++++++++++++++++++++++++++++++++
 
         ///<summary>
         ///初始化管理器
@@ -151,7 +197,7 @@ namespace SilksongCustomAudio
 
                 //检查所有条件是否满足
                 bool allConditionsMet = true;
-                foreach (var  condition in audioConfig.Conditions)
+                foreach (var condition in audioConfig.Conditions)
                 {
                     object valueToCheck = null;
 
@@ -224,7 +270,7 @@ namespace SilksongCustomAudio
             if (config.StopOriginalAudio && !string.IsNullOrEmpty(config.OriginalAudioName))
             {
                 StopOriginalAudio(config.OriginalAudioName, config.FadeOutTime);
-            }    
+            }
 
             //播放原音频
             if (!string.IsNullOrEmpty(config.CustomAudioName))
@@ -240,7 +286,7 @@ namespace SilksongCustomAudio
             AudioSource[] allSources = GameObject.FindObjectsOfType<AudioSource>();
             foreach (var source in allSources)
             {
-                if (source.isPlaying && source.clip != null && 
+                if (source.isPlaying && source.clip != null &&
                     source.clip.name.Contains(audioName))
                 {
                     if (fadeTime > 0)
@@ -258,69 +304,78 @@ namespace SilksongCustomAudio
         }
         private static void PlayCustomAudio(string audioName, float fadeTime)
         {
-            if (CustomAudio.AudioDictionary.TryGetValue(audioName, out AudioClip clip))
+            if (!CustomAudio.AudioDictionary.TryGetValue(audioName, out AudioClip clip))
             {
-                //检查是否已存在相同音频的AudioSource
-                if (customAudioSources.TryGetValue(audioName, out AudioSource existingSource))
+                CustomAudio.staticLogger?.LogWarning($"没有找到匹配的音频：{audioName}");
+                return;
+            }
+
+            //检查是否已存在相同音频的AudioSource
+            if (customAudioSourceInfos.TryGetValue(audioName, out var existingInfo))
+            {
+                if (existingInfo != null && existingInfo.Source != null)
                 {
-                    if (existingSource != null)
+                    if (existingInfo.Source.isPlaying)
                     {
-                        if (existingSource.isPlaying)
-                        {
-                            CustomAudio.staticLogger?.LogInfo($"音频已在播放：{audioName}");
-                            return;
-                        }
-
-                        existingSource.clip = clip;
-                        existingSource.loop = true;
-                        
-                        if (fadeTime > 0)
-                        {
-                            AudioFader.FadeIn(existingSource, fadeTime);
-                        }
-                        else
-                        {
-                            existingSource.volume = 1f;
-                            existingSource.Play();
-                        }
-
-                        CustomAudio.staticLogger?.LogInfo($"重新播放自制音频：{audioName}");
+                        CustomAudio.staticLogger?.LogInfo($"音频已在播放：{audioName}");
                         return;
+                    }
+
+                    existingInfo.Source.clip = clip;
+                    existingInfo.Source.loop = true;
+
+                    //设置初始音量（基于当前游戏设置）
+                    existingInfo.BaseVolume = 1f;//将在UpdateCustomAudioVolumes更新
+                    existingInfo.VolumeMultiplier = 1f;
+                    existingInfo.UpdateVolume();
+
+                    if (fadeTime > 0)
+                    {
+                        AudioFader.FadeIn(existingInfo.Source, fadeTime);
                     }
                     else
                     {
-                        //清除无效引用
-                        customAudioSources.Remove(audioName);
+                        existingInfo.Source.Play();
                     }
-                }
 
-                //创建一个新的AudioSource来播放自定义音频
-                GameObject audioObject = new GameObject($"BossAudio_{audioName}");
-                AudioSource source = audioObject.AddComponent<AudioSource>();
-                source.clip = clip;
-                source.loop = true;
-
-                //+++++记录自制音频源+++++
-                customAudioSources[audioName] = source;
-                //++++++++++++++++++++
-
-                if (fadeTime > 0)
-                {
-                    AudioFader.FadeIn(source, fadeTime);//使用改进的淡入
+                    CustomAudio.staticLogger?.LogInfo($"重新播放自制音频：{audioName}");
+                    return;
                 }
                 else
                 {
-                    source.volume = 1f;
-                    source.Play();
+                    //清除无效引用
+                    customAudioSourceInfos.Remove(audioName);
                 }
+            }
 
-                CustomAudio.staticLogger?.LogInfo($"正在播放自制音频：{audioName}");
+            //创建一个新的AudioSource来播放自定义音频
+            GameObject audioObject = new GameObject($"BossAudio_{audioName}");
+            AudioSource source = audioObject.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.loop = true;
+
+            //创建信息对象
+            var audioInfo = new CustomAudioSourceInfo()
+            {
+                Source = source,
+                BaseVolume = 1f,
+                VolumeMultiplier = 1f,
+            };
+
+            customAudioSourceInfos[audioName] = audioInfo;
+
+            if (fadeTime > 0)
+            {
+                AudioFader.FadeIn(source, fadeTime);//使用改进的淡入
             }
             else
             {
-                CustomAudio.staticLogger?.LogWarning($"没有找到匹配的音频：{audioName}");
+                source.Play();
             }
+
+            CustomAudio.staticLogger?.LogInfo($"正在播放自制音频：{audioName}");
         }
+        
 
         //添加一个交叉淡入淡出的方法
         public static void CrossfadeBossAudio(string bossName, string originalAudio, string customAudio, float duration = 1f)
@@ -330,7 +385,7 @@ namespace SilksongCustomAudio
 
             if (originalSource != null && customSource != null)
             {
-                AudioFader.CrossFade(originalSource,customSource,duration);
+                AudioFader.CrossFade(originalSource, customSource, duration);
             }
         }
         private static AudioSource FindAudioSource(string audioName)
@@ -338,7 +393,7 @@ namespace SilksongCustomAudio
             AudioSource[] allSources = GameObject.FindObjectsOfType<AudioSource>();
             foreach (var source in allSources)
             {
-                if (source.isPlaying && source.clip != null && 
+                if (source.isPlaying && source.clip != null &&
                     source.clip.name.Contains(audioName))
                     return source;
             }
@@ -359,17 +414,17 @@ namespace SilksongCustomAudio
         //+++++停止自制音频、清理无效音频源功能+++++
         public static void StopAllCustomAudio(float fadeTime = 0.5f)
         {
-            foreach (var kvp in customAudioSources.ToList())
+            foreach (var kvp in customAudioSourceInfos.ToList())
             {
-                if (kvp.Value != null && kvp.Value.isPlaying)
+                if (kvp.Value != null && kvp.Value.Source != null && kvp.Value.Source.isPlaying)
                 {
                     if (fadeTime > 0)
                     {
-                        AudioFader.FadeOut(kvp.Value, fadeTime);
+                        AudioFader.FadeOut(kvp.Value.Source, fadeTime);
                     }
                     else
                     {
-                        kvp.Value.Stop();
+                        kvp.Value.Source.Stop();
                     }
                     CustomAudio.staticLogger?.LogInfo($"停止自制音频：{kvp.Key}");
                 }
@@ -379,20 +434,20 @@ namespace SilksongCustomAudio
         public static void CleanupInvalidSources()
         {
             var keysToRemove = new List<string>();
-            foreach (var kvp in customAudioSources)
+            foreach (var kvp in customAudioSourceInfos)
             {
-                if (kvp.Value == null)
+                if (kvp.Value == null || kvp.Value.Source == null)
                 {
                     keysToRemove.Add(kvp.Key);
                 }
             }
             foreach (var key in keysToRemove)
             {
-                customAudioSources.Remove(key);
+                customAudioSourceInfos.Remove(key);
             }
         }
 
-        //+++++重置状态功能+++++
+        //重置状态功能
         public static void ResetBossState(string bossName)
         {
             if (bossStates.TryGetValue(bossName, out var state))
@@ -415,5 +470,20 @@ namespace SilksongCustomAudio
 
             CustomAudio.staticLogger?.LogInfo("重置所有Boss状态");
         }
+
+        //+++++获取所有自定义音频源（供事件监听器使用）+++++
+        public static List<AudioSource> GetAllCustomAudioSources()
+        {
+            List<AudioSource> sources = new List<AudioSource>();
+            foreach (var kvp in customAudioSourceInfos)
+            {
+                if (kvp.Value != null && kvp.Value.Source != null)
+                {
+                    sources.Add(kvp.Value.Source);
+                }
+            }
+            return sources;
+        }
+        //+++++++++++++++++++++++++++++++
     }
 }
