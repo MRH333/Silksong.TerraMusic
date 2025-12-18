@@ -60,7 +60,7 @@ namespace SilksongCustomAudio
         /// </summary>
         private void LoadAudio()
         {
-            foreach (string filePath in Directory.GetFiles(audioDirectory))
+            foreach (string filePath in Directory.GetFiles(audioDirectory, "*.wav", SearchOption.AllDirectories))
             {
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
 
