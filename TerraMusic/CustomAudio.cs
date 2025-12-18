@@ -11,7 +11,7 @@ using WavLib;
 
 namespace SilksongCustomAudio
 {
-    [BepInPlugin("com.sonyo.customaudio", "Custom Audio", "1.1.2")]
+    [BepInPlugin("io.github.MRH333.TerraMusic", "TerraMusic", "1.0.0")]
     public class CustomAudio : BaseUnityPlugin
     {
         internal static readonly Dictionary<string, AudioClip> AudioDictionary = new Dictionary<string, AudioClip>();
@@ -35,7 +35,7 @@ namespace SilksongCustomAudio
             //GameAudioEventListener.Initialize();
 
             // 使用Harmony自动Patch所有标记的方法
-            Harmony harmony = new Harmony("com.sonyo.customaudio");
+            Harmony harmony = new Harmony("io.github.MRH333.TerraMusic");
             harmony.PatchAll(typeof(CustomAudio));
             //额外Patch PlayMaker相关类
             harmony.PatchAll(typeof(PlayMakerHooks));
