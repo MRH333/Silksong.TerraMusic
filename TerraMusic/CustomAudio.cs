@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using NVorbis;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -56,56 +57,170 @@ namespace SilksongCustomAudio
         }
 
         /// <summary>
-        /// 加载音频文件到字典
+        /// 加载音频文件到字典（支持WAV和OGG格式）
         /// </summary>
         private void LoadAudio()
         {
+            int wavCount = 0;
+            int oggCount = 0;
+
             foreach (string filePath in Directory.GetFiles(audioDirectory, "*.wav", SearchOption.AllDirectories))
             {
-                string fileName = Path.GetFileNameWithoutExtension(filePath);
-
-                // 排除日志文件
-                if (fileName == "AudioLog")
-                    continue;
-
-                try
-                {
-                    using (FileStream stream = File.OpenRead(filePath))
-                    {
-                        WavData wavData = new WavData();
-                        wavData.Parse(stream);
-
-                        if (wavData == null)
-                        {
-                            Logger.LogWarning($"Failed loading {filePath}");
-                            continue;
-                        }
-
-                        // 提取音频样本数据
-                        float[] samples = wavData.GetSamples();
-
-                        // 创建Unity音频剪辑
-                        AudioClip audioClip = AudioClip.Create(
-                            fileName,
-                            samples.Length / (int)wavData.FormatChunk.NumChannels,
-                            (int)wavData.FormatChunk.NumChannels,
-                            (int)wavData.FormatChunk.SampleRate,
-                            false
-                        );
-
-                        audioClip.SetData(samples, 0);
-                        AudioDictionary[fileName] = audioClip;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWarning($"Failed loading {filePath}");
-                    Logger.LogError(ex);
-                }
+                if (LoadWavFile(filePath))
+                    wavCount++;
             }
 
-            Logger.LogInfo($"Loaded {AudioDictionary.Count} custom audio files");
+            foreach (string filePath in Directory.GetFiles(audioDirectory, "*.ogg", SearchOption.AllDirectories))
+            {
+                if (LoadOggFile(filePath))
+                    oggCount++;
+            }
+
+            Logger.LogInfo($"已加载 {wavCount} 个WAV音频文件和 {oggCount} 个OGG音频文件");
         }
+
+        /// <summary>
+        /// 加载WAV文件
+        /// </summary>
+        private bool LoadWavFile(string filePath)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            // 排除日志文件
+            if (fileName == "AudioLog")
+                return false;
+
+            try
+            {
+                using (FileStream stream = File.OpenRead(filePath))
+                {
+                    WavData wavData = new WavData();
+                    wavData.Parse(stream);
+
+                    if (wavData == null)
+                    {
+                        Logger.LogWarning($"Failed loading {filePath}");
+                        return false;
+                    }
+
+                    // 提取音频样本数据
+                    float[] samples = wavData.GetSamples();
+
+                    // 创建Unity音频剪辑
+                    AudioClip audioClip = AudioClip.Create(
+                        fileName,
+                        samples.Length / (int)wavData.FormatChunk.NumChannels,
+                        (int)wavData.FormatChunk.NumChannels,
+                        (int)wavData.FormatChunk.SampleRate,
+                        false
+                    );
+
+                    audioClip.SetData(samples, 0);
+
+                    //添加到字典，如果存在同名文件，OGG优先
+                    if (!AudioDictionary.ContainsKey(fileName) || Path.GetExtension(filePath).ToLower() == ".ogg")
+                    {
+                        AudioDictionary[fileName] = audioClip;
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"加载WAV失败： {filePath}");
+                Logger.LogError(ex);
+            }
+
+            return false;
+        }
+        ///<summary>
+        ///加载OGG文件
+        /// </summary>
+        private bool LoadOggFile(string filePath)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            // 排除日志文件
+            if (fileName == "AudioLog")
+                return false;
+
+            //+++++调试+++++
+            Logger.LogInfo($"尝试加载OGG文件：{filePath}");
+
+            try
+            {
+                using (var vorbis = new VorbisReader(filePath))
+                {
+                    //获取音频信息
+                    int channels = vorbis.Channels;
+                    int sampleRate = vorbis.SampleRate;
+                    long samplesPerChannel = vorbis.TotalSamples;//TotalSamples已经是每声道样本数
+                    long totalSamples = samplesPerChannel * channels;//计算总样本数（用于缓冲区大小）
+                    //int samplesPerChannel = (int)(totalSamples / channels);
+
+                    //+++++调试+++++
+                    Logger.LogInfo($" - 报告总样本数：{totalSamples}");
+                    Logger.LogInfo($" - 每声道总样本数：{samplesPerChannel}");
+
+                    //创建缓冲区并读取所有样本
+                    float[] buffer = new float[totalSamples];
+                    int samplesRead = vorbis.ReadSamples(buffer, 0, (int)totalSamples);
+
+                    if (samplesRead <= 0)
+                    {
+                        Logger.LogWarning($"OGG文件读取失败或为空：{filePath}");
+                        return false;
+                    }
+
+                    //降低音量到25%
+                    float volumeScale = 0.25f;//25%音量
+                    for (int i = 0; i < samplesRead; i++)
+                    {
+                        buffer[i] *= volumeScale;
+                    }
+
+                    //创建Unity音频剪辑
+                    AudioClip audioClip = AudioClip.Create(
+                        fileName,
+                        //samplesRead / channels,
+                        (int)samplesPerChannel,//每声道样本数
+                        channels,
+                        sampleRate,
+                        false
+                        );
+                    audioClip.SetData(buffer, 0);
+
+                    //添加到字典，OGG文件优先
+                    AudioDictionary[fileName] = audioClip;
+
+                    //记录文件大小对比
+                    var fileInfo = new FileInfo(filePath);
+                    Logger.LogDebug($"已加载OGG：{fileName} （{fileInfo.Length / 1024}KB，" +
+                        $"{channels}声道，{sampleRate}Hz）");
+
+
+                    //+++++调试+++++
+                    Logger.LogInfo($" - 实际创建AudioClip时长：{samplesPerChannel / (double)sampleRate:F2}秒");
+                    //+++++++++++++
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"加载OGG失败： {filePath}");
+                Logger.LogError(ex);
+            }
+            return false;
+        }
+
+        ///<summary>
+        ///获取所有支持的音频扩展名（用于调试）
+        /// </summary>
+        public static string[] GetSupportedExtensions()
+        {
+            return new string[] { ".wav", ".ogg" };
+        }
+
 
         /// <summary>
         /// 尝试替换AudioSource的音频剪辑
@@ -128,8 +243,8 @@ namespace SilksongCustomAudio
                     return true;
                 }
             }
-            
-            
+
+
             //再尝试通用音频
             if (AudioDictionary.TryGetValue(source.clip.name, out replacementClip))
             {
