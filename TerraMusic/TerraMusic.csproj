@@ -353,6 +353,7 @@
     <Compile Include="GameAudioEventListener.cs" />
     <Compile Include="PlayMakerHooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StreamingOggManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

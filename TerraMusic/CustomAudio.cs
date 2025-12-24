@@ -62,21 +62,24 @@ namespace SilksongCustomAudio
         private void LoadAudio()
         {
             int wavCount = 0;
-            int oggCount = 0;
+            int streamingOggCount = 0;
 
+            //加载WAV文件
             foreach (string filePath in Directory.GetFiles(audioDirectory, "*.wav", SearchOption.AllDirectories))
             {
                 if (LoadWavFile(filePath))
                     wavCount++;
             }
 
+            //加载OGG文件（只创建流式AudioClip，不预加载到内存）
             foreach (string filePath in Directory.GetFiles(audioDirectory, "*.ogg", SearchOption.AllDirectories))
             {
-                if (LoadOggFile(filePath))
-                    oggCount++;
+                //只创建流式AudioClip引用，不立即解码
+                if (RegisterStreamingOgg(filePath))
+                    streamingOggCount++;
             }
 
-            Logger.LogInfo($"已加载 {wavCount} 个WAV音频文件和 {oggCount} 个OGG音频文件");
+            Logger.LogInfo($"已加载 {wavCount} 个WAV音频文件和 {streamingOggCount} 个流式OGG音频文件");
         }
 
         /// <summary>
@@ -133,6 +136,46 @@ namespace SilksongCustomAudio
 
             return false;
         }
+
+        ///<summary>
+        ///注册流式OGG文件（不加载数据，只创建引用）
+        /// </summary>
+        private bool RegisterStreamingOgg(string filePath)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            // 排除日志文件
+            if (fileName == "AudioLog")
+                return false;
+            try
+            {
+
+                //创建流式AudioClip
+                AudioClip clip = StreamingOggManager.CreateStreamingClip(filePath);
+
+                //添加到字典，OGG文件优先
+                if (clip != null)
+                {
+                    AudioDictionary[fileName] = clip;//流式clip，没有预加载数据
+
+                    var fileInfo = new FileInfo(filePath);
+                    Logger.LogDebug($"已注册流式OGG：{fileName} （{fileInfo.Length / 1024}KB）");
+
+                    return true;
+                }
+                else
+                {
+                   Logger.LogWarning($"注册流式OGG失败，无法创建AudioClip：{fileName}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"注册流式OGG失败： {filePath}");
+                Logger.LogError(ex);
+            }
+            return false;
+        }
+
         ///<summary>
         ///加载OGG文件
         /// </summary>
