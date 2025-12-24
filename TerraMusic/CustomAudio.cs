@@ -3,7 +3,6 @@ using BepInEx.Logging;
 using HarmonyLib;
 using NVorbis;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -177,7 +176,7 @@ namespace SilksongCustomAudio
         }
 
         ///<summary>
-        ///加载OGG文件
+        ///加载OGG文件（暂时弃用）
         /// </summary>
         private bool LoadOggFile(string filePath)
         {
@@ -255,15 +254,6 @@ namespace SilksongCustomAudio
             }
             return false;
         }
-
-        ///<summary>
-        ///获取所有支持的音频扩展名（用于调试）
-        /// </summary>
-        public static string[] GetSupportedExtensions()
-        {
-            return new string[] { ".wav", ".ogg" };
-        }
-
 
         /// <summary>
         /// 尝试替换AudioSource的音频剪辑

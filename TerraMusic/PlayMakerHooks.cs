@@ -3,7 +3,6 @@ using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace SilksongCustomAudio
@@ -24,8 +23,7 @@ namespace SilksongCustomAudio
                 if (__instance.boolVariable.Name == "Pause 2" ||
                     __instance.boolVariable.Name == "Pause 3")
                 {
-                    CustomAudio.staticLogger?.LogInfo(
-                        $"Boss {bossName} 状态变化：{__instance.boolVariable.Name} = {__instance.boolValue.Value}");
+                    CustomAudio.staticLogger?.LogInfo($"Boss {bossName} 状态变化：{__instance.boolVariable.Name} = {__instance.boolValue.Value}");
                 }
                 //+++++++++++++++
 

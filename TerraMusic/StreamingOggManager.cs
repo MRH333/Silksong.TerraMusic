@@ -1,11 +1,7 @@
 ﻿using NVorbis;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace SilksongCustomAudio
@@ -38,12 +34,6 @@ namespace SilksongCustomAudio
 
             try
             {
-                //VorbisReader reader = new VorbisReader(filePath);
-                //int channels = reader.Channels;
-                //int sampleRate = reader.SampleRate;
-                //long samplesPerChannel = reader.TotalSamples;
-                //long totalSamples = samplesPerChannel * channels;
-
                 //1.读取文件头信息（不创建Reader)
                 OggFileInfo info = GetOrReadFileInfo(filePath);
 
@@ -57,10 +47,6 @@ namespace SilksongCustomAudio
                     (float[] data) => OnAudioRead(filePath, data),//数据回调
                     (int position) => OnAudioSeek(filePath, position)//定位回调
                     );
-
-                //存储映射关系
-                //activeReaders[filePath] = reader;
-                //clipToPathMap[clip] = filePath;
 
                 CustomAudio.staticLogger?.LogInfo($"创建流式OGG AudioClip：{clipName}（{info.SamplesPerChannel / info.SampleRate:F1}）秒");
 
@@ -103,16 +89,16 @@ namespace SilksongCustomAudio
         {
 
             // 添加时间戳和Reader位置信息
-            DateTime now = DateTime.Now;
+            //DateTime now = DateTime.Now;
 
             //获得或创建Reader（第一次播放时）
             if (GetOrCreateReader(filePath, out VorbisReader reader))
             {
-                long readerPosition = reader.SamplePosition;
-                CustomAudio.staticLogger?.LogInfo(
-                    $"OnAudioRead: {data.Length}样本, " +
-                    $"Reader位置: {readerPosition}, " +
-                    $"时间: {now:HH:mm:ss.fff}");
+                //long readerPosition = reader.SamplePosition;
+                //CustomAudio.staticLogger?.LogInfo(
+                //    $"OnAudioRead: {data.Length}样本, " +
+                //    $"Reader位置: {readerPosition}, " +
+                //    $"时间: {now:HH:mm:ss.fff}");
 
 
                 int samplesRead = reader.ReadSamples(data, 0, data.Length);
@@ -170,18 +156,6 @@ namespace SilksongCustomAudio
         }
 
         ///<summary>
-        ///获取声道数
-        /// </summary>
-        private static int GetChannelCount(string filePath)
-        {
-            if (fileInfoCache.TryGetValue(filePath, out OggFileInfo info))
-            {
-                return info.Channels;
-            }
-            return 2;//默认立体声
-        }
-
-        ///<summary>
         ///获取或创建VorbisReader（每个文件一个Reader实例）
         /// </summary>
         private static bool GetOrCreateReader(string filePath, out VorbisReader reader)
@@ -205,29 +179,17 @@ namespace SilksongCustomAudio
             }
         }
 
-        ///<summary>
-        ///清理特定文件的资源
-        /// </summary>
-        private static void CleanupFile(string filePath)
-        {
-            if (activeReaders.TryRemove(filePath, out VorbisReader reader))
-            {
-                reader?.Dispose();
-            }
-            fileInfoCache.TryRemove(filePath, out _);
-        }
-
-        ///<summary>
-        ///清理所有资源
-        /// </summary>
-        public static void CleanupAll()
-        {
-            foreach (var reader in activeReaders.Values)
-            {
-                reader.Dispose();
-            }
-            activeReaders.Clear();
-            fileInfoCache.Clear();
-        }
+        /////<summary>
+        /////清理所有资源
+        ///// </summary>
+        //public static void CleanupAll()
+        //{
+        //    foreach (var reader in activeReaders.Values)
+        //    {
+        //        reader.Dispose();
+        //    }
+        //    activeReaders.Clear();
+        //    fileInfoCache.Clear();
+        //}
     }
 }

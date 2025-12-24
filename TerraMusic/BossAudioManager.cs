@@ -1,9 +1,5 @@
-﻿using BepInEx.Logging;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace SilksongCustomAudio
@@ -57,7 +53,7 @@ namespace SilksongCustomAudio
             public bool IsAudioSwitching { get; set; }
         }
 
-        //+++++添加跟踪自制音频的字典（被自制音频信息字典更改）++++++
+        //添加跟踪自制音频的字典（被自制音频信息字典更改）
         private static readonly Dictionary<string, CustomAudioSourceInfo> customAudioSourceInfos = new Dictionary<string, CustomAudioSourceInfo>();
         //++++++自制音频信息（用于调节音量适配游戏）+++++
         public class CustomAudioSourceInfo
@@ -140,13 +136,7 @@ namespace SilksongCustomAudio
                                 Type = ConditionType.BoolVariableSet,
                                 VariableName = "Phase 2",
                                 TargetValue = true,
-                            },
-                            //new TriggerCondition()
-                            //{
-                            //    Type = ConditionType.BoolVariableSet,
-                            //    VariableName = "Under HP Check",
-                            //    TargetValue = true,
-                            //}
+                            }
                         }
                     }
                 }
@@ -449,17 +439,6 @@ namespace SilksongCustomAudio
         }
 
         //重置状态功能
-        public static void ResetBossState(string bossName)
-        {
-            if (bossStates.TryGetValue(bossName, out var state))
-            {
-                state.CurrentPhase = "Phase 1";
-                state.Variables.Clear();
-                state.IsAudioSwitching = false;
-
-                CustomAudio.staticLogger?.LogInfo($"重置Boss状态：{bossName}");
-            }
-        }
         public static void ResetAllBossStates()
         {
             foreach (var kvp in bossStates)
@@ -472,19 +451,19 @@ namespace SilksongCustomAudio
             CustomAudio.staticLogger?.LogInfo("重置所有Boss状态");
         }
 
-        //+++++获取所有自定义音频源（供事件监听器使用）+++++
-        public static List<AudioSource> GetAllCustomAudioSources()
-        {
-            List<AudioSource> sources = new List<AudioSource>();
-            foreach (var kvp in customAudioSourceInfos)
-            {
-                if (kvp.Value != null && kvp.Value.Source != null)
-                {
-                    sources.Add(kvp.Value.Source);
-                }
-            }
-            return sources;
-        }
-        //+++++++++++++++++++++++++++++++
+        ////+++++获取所有自定义音频源（供事件监听器使用）+++++
+        //public static List<AudioSource> GetAllCustomAudioSources()
+        //{
+        //    List<AudioSource> sources = new List<AudioSource>();
+        //    foreach (var kvp in customAudioSourceInfos)
+        //    {
+        //        if (kvp.Value != null && kvp.Value.Source != null)
+        //        {
+        //            sources.Add(kvp.Value.Source);
+        //        }
+        //    }
+        //    return sources;
+        //}
+        ////+++++++++++++++++++++++++++++++
     }
 }

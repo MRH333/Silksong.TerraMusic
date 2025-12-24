@@ -1,10 +1,6 @@
 ﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace SilksongCustomAudio
@@ -187,31 +183,6 @@ namespace SilksongCustomAudio
         {
             BossAudioManager.SetAllCustomAudioVolumeMultiplier(multiplier);
         }
-
-        ///<summary>
-        ///从游戏设置中获取音量值（通过反射）
-        ///</summary>
-        //private static float GetVolumeFromSettings(string volumeName, float defaultValue)
-        //{
-        //    try
-        //    {
-        //        //尝试通过反射获取
-        //        var gameSettings = Resources.FindObjectsOfTypeAll<GameSettings>();//！！！
-        //        if (gameSettings != null && gameSettings.Length > 0)
-        //        {
-        //            var field = typeof(GameSettings).GetField(volumeName);
-        //            if (field != null)
-        //            {
-        //                return (float)field.GetValue(gameSettings[0]);
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        CustomAudio.staticLogger?.LogWarning($"无法获取音量设置 {volumeName}：{ex.Message}")
-        //    }
-        //    return defaultValue;
-        //}
 
         ///<summary>
         ///获取GameSettings实例
