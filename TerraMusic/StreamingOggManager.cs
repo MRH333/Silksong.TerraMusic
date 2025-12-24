@@ -101,10 +101,29 @@ namespace SilksongCustomAudio
         /// </summary>
         private static void OnAudioRead(string filePath, float[] data)
         {
+
+            // 添加时间戳和Reader位置信息
+            DateTime now = DateTime.Now;
+
             //获得或创建Reader（第一次播放时）
             if (GetOrCreateReader(filePath, out VorbisReader reader))
             {
+                long readerPosition = reader.SamplePosition;
+                CustomAudio.staticLogger?.LogInfo(
+                    $"OnAudioRead: {data.Length}样本, " +
+                    $"Reader位置: {readerPosition}, " +
+                    $"时间: {now:HH:mm:ss.fff}");
+
+
                 int samplesRead = reader.ReadSamples(data, 0, data.Length);
+
+                //处理文件结束
+                if (samplesRead == 0)
+                {
+                    CustomAudio.staticLogger?.LogInfo($"文件结束，重置到开头");
+                    reader.SeekTo(0);
+                    samplesRead = reader.ReadSamples(data, 0, data.Length);
+                }
 
                 //应用25%音量降低
                 const float volumeScale = 0.25f;
@@ -113,11 +132,11 @@ namespace SilksongCustomAudio
                     data[i] *= volumeScale;
                 }
 
-                //填充剩余部分为静音
-                for (int i = samplesRead; i < data.Length; i++)
-                {
-                    data[i] = 0f;
-                }
+                ////填充剩余部分为静音
+                //for (int i = samplesRead; i < data.Length; i++)
+                //{
+                //    data[i] = 0f;
+                //}
             }
             else
             {
@@ -139,14 +158,6 @@ namespace SilksongCustomAudio
                                                       $"文件: {Path.GetFileName(filePath)}, " +
                                                       $"总样本: {reader.TotalSamples}, " +
                                                       $"声道: {reader.Channels}");
-
-                    // 检查position范围
-                    if (position < 0 || position >= reader.TotalSamples)
-                    {
-                        CustomAudio.staticLogger?.LogWarning($"Seek位置超出范围: {position}, " +
-                                                            $"有效范围: 0-{reader.TotalSamples - 1}");
-                        return;
-                    }
 
                     reader.SeekTo(position);
                 }

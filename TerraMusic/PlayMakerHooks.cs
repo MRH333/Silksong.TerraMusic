@@ -90,11 +90,9 @@ namespace SilksongCustomAudio
         [HarmonyPatch(typeof(GameManager), "OnNextLevelReady", new Type[] {})]
         private static void OnNextLevelReady_Postfix()
         {
-            //场景切换时停止所有自制音频，清理流式加载内存
+            //场景切换时停止所有自制音频（不清理流式加载内存）
             BossAudioManager.StopAllCustomAudio(0.5f);
             BossAudioManager.CleanupInvalidSources();
-
-            //StreamingOggManager.CleanupAll();
 
             //切换场景时重置
             CustomAudio.staticLogger?.LogInfo("场景已切换，重置状态");

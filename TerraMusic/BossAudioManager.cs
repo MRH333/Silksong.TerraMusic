@@ -430,8 +430,6 @@ namespace SilksongCustomAudio
                     CustomAudio.staticLogger?.LogInfo($"停止自制音频：{kvp.Key}");
                 }
             }
-
-            StreamingOggManager.CleanupAll();
         }
 
         public static void CleanupInvalidSources()
