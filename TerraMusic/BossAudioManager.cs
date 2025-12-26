@@ -144,6 +144,32 @@ namespace SilksongCustomAudio
 
             bossConfigs[lostLaceConfig.BossName] = lostLaceConfig;
             bossStates[lostLaceConfig.BossName] = new BossState();
+
+            var dockGuardConfig = new BossAudioConfig()
+            {
+                BossName = "Dock Guard",
+                PhaseConfigs =
+                {
+                    ["Phase 2"] = new PhaseAudioConfig()
+                    {
+                        OriginalAudioName = "H92 Chorus_Dock_09",
+                        CustomAudioName = "Leviathan",
+                        StopOriginalAudio = true,
+                        Conditions =
+                        {
+                            new TriggerCondition()
+                            {
+                                Type = ConditionType.BoolVariableSet,
+                                VariableName = "TO P4",
+                                TargetValue = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            bossConfigs[dockGuardConfig.BossName] = dockGuardConfig;
+            bossStates[dockGuardConfig.BossName] = new BossState();
         }
 
         ///<summary>
