@@ -141,7 +141,6 @@ namespace SilksongCustomAudio
                     }
                 }
             };
-
             bossConfigs[lostLaceConfig.BossName] = lostLaceConfig;
             bossStates[lostLaceConfig.BossName] = new BossState();
 
@@ -167,9 +166,58 @@ namespace SilksongCustomAudio
                     }
                 }
             };
-
             bossConfigs[dockGuardConfig.BossName] = dockGuardConfig;
             bossStates[dockGuardConfig.BossName] = new BossState();
+
+            var bellEaterConfig = new BossAudioConfig()
+            {
+                BossName = "Bell Eater",
+                PhaseConfigs =
+                {
+                    ["Phase 2"] = new PhaseAudioConfig()
+                    {
+                        OriginalAudioName = "H177 Bell Beast with Live-17_Bellway_Centipede_Arena",
+                        CustomAudioName = "DevourerofGodsPhase2",
+                        StopOriginalAudio = true,
+                        Conditions =
+                        {
+                            new TriggerCondition()
+                            {
+                                Type = ConditionType.BoolVariableSet,
+                                VariableName = "NEXT",
+                                TargetValue = true
+                            }
+                        }
+                    }
+                }
+            };
+            bossConfigs[bellEaterConfig.BossName] = bellEaterConfig;
+            bossStates[bellEaterConfig.BossName] = new BossState();
+
+            var fireFatherConfig = new BossAudioConfig()
+            {
+                BossName = "Fire Father",
+                PhaseConfigs =
+                {
+                    ["Phase 2"] = new PhaseAudioConfig()
+                    {
+                        OriginalAudioName = "Creepy Main_Belltown_08",
+                        CustomAudioName = "Providence",
+                        StopOriginalAudio = true,
+                        Conditions =
+                        {
+                            new TriggerCondition()
+                            {
+                                Type = ConditionType.BoolVariableSet,
+                                VariableName = "CORE DAMAGE READY",
+                                TargetValue = true
+                            }
+                        }
+                    }
+                }
+            };
+            bossConfigs[fireFatherConfig.BossName] = fireFatherConfig;
+            bossStates[fireFatherConfig.BossName] = new BossState();
         }
 
         ///<summary>
@@ -392,7 +440,7 @@ namespace SilksongCustomAudio
 
             CustomAudio.staticLogger?.LogInfo($"正在播放自制音频：{audioName}");
         }
-        
+
 
         //添加一个交叉淡入淡出的方法
         public static void CrossfadeBossAudio(string bossName, string originalAudio, string customAudio, float duration = 1f)
@@ -435,6 +483,14 @@ namespace SilksongCustomAudio
             {
                 if (kvp.Value != null && kvp.Value.Source != null && kvp.Value.Source.isPlaying)
                 {
+                    //+++++判断是否停止了神吞BGM++++++
+                    if (kvp.Key == "DevourerofGodsPhase2")
+                    {
+                        StreamingOggManager.isDevourerPhase2 = false;
+                        StreamingOggManager.DevourerPhase2SeekedCount = 0;
+                    }
+                    //+++++++++++++++++++++++++++
+
                     if (fadeTime > 0)
                     {
                         AudioFader.FadeOut(kvp.Value.Source, fadeTime);

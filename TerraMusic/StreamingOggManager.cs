@@ -25,6 +25,13 @@ namespace SilksongCustomAudio
             public long TotalSamples { get; set; }
         }
 
+        //+++++神吞BGM循环点样本位置+++++
+        private static int loopEndBufferSamples = (int)(0.5f * 48000 * 2);//立体声
+        private static long DevourerPhase2_LoopStartSample = (long)(10.428f * 48000 * 1);//立体声
+
+        public static int DevourerPhase2SeekedCount = 0;
+        public static bool isDevourerPhase2 = false;
+
         /// <summary>
         /// 为OGG文件创建一个流式AudioClip（延迟加载）
         /// </summary>
@@ -88,28 +95,19 @@ namespace SilksongCustomAudio
         private static void OnAudioRead(string filePath, float[] data)
         {
 
-            // 添加时间戳和Reader位置信息
-            //DateTime now = DateTime.Now;
-
             //获得或创建Reader（第一次播放时）
             if (GetOrCreateReader(filePath, out VorbisReader reader))
             {
-                //long readerPosition = reader.SamplePosition;
-                //CustomAudio.staticLogger?.LogInfo(
-                //    $"OnAudioRead: {data.Length}样本, " +
-                //    $"Reader位置: {readerPosition}, " +
-                //    $"时间: {now:HH:mm:ss.fff}");
-
-
                 int samplesRead = reader.ReadSamples(data, 0, data.Length);
 
-                //处理文件结束
-                if (samplesRead == 0)
+                //=====处理文件结束（神吞BGM循环）======
+                if (samplesRead == 0 && isDevourerPhase2)
                 {
-                    CustomAudio.staticLogger?.LogInfo($"文件结束，重置到开头");
-                    reader.SeekTo(0);
+                    CustomAudio.staticLogger?.LogInfo($"神吞BGM再次循环结束，重置到循环起点");
+                    reader.SeekTo(DevourerPhase2_LoopStartSample);
                     samplesRead = reader.ReadSamples(data, 0, data.Length);
                 }
+                //================================
 
                 //应用25%音量降低
                 const float volumeScale = 0.25f;
@@ -117,12 +115,6 @@ namespace SilksongCustomAudio
                 {
                     data[i] *= volumeScale;
                 }
-
-                ////填充剩余部分为静音
-                //for (int i = samplesRead; i < data.Length; i++)
-                //{
-                //    data[i] = 0f;
-                //}
             }
             else
             {
@@ -137,8 +129,37 @@ namespace SilksongCustomAudio
         {
             try
             {
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                isDevourerPhase2 = fileName == "DevourerofGodsPhase2";
+
                 if (GetOrCreateReader(filePath, out VorbisReader reader))
                 {
+                    //+++++判断是否是神吞BGM并处理+++++
+                    if (isDevourerPhase2)
+                    {
+                        CustomAudio.staticLogger?.LogInfo($"神吞BGM检测到Seek请求: {position}样本");
+                        if (DevourerPhase2SeekedCount == 1)
+                        {
+                            reader.SeekTo(DevourerPhase2_LoopStartSample);
+                            CustomAudio.staticLogger?.LogInfo($"神吞BGM第二次Seek，定位到循环点: {DevourerPhase2_LoopStartSample}");
+                            DevourerPhase2SeekedCount++;
+
+                            return;
+                        }
+                        else if (DevourerPhase2SeekedCount > 1)
+                        {
+                            //reader.SeekTo(DevourerPhase2_LoopStartSample);
+                            CustomAudio.staticLogger?.LogInfo($"神吞BGM多次Seek，不做任何操作");
+                            return;
+                        }
+                        else
+                        {
+                            CustomAudio.staticLogger?.LogInfo($"神吞BGM首次Seek，允许正常定位");
+                            DevourerPhase2SeekedCount++;
+                        }
+                    }
+                    //+++++++++++++
+
                     // 添加调试日志
                     CustomAudio.staticLogger?.LogDebug($"Seek请求: {position}样本, " +
                                                       $"文件: {Path.GetFileName(filePath)}, " +
@@ -147,13 +168,13 @@ namespace SilksongCustomAudio
 
                     reader.SeekTo(position);
                 }
-
             }
             catch (Exception e)
             {
                 CustomAudio.staticLogger?.LogWarning($"OGG seek失败：{e.Message}");
             }
         }
+
 
         ///<summary>
         ///获取或创建VorbisReader（每个文件一个Reader实例）

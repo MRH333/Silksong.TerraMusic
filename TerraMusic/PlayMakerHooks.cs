@@ -3,6 +3,7 @@ using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections;
+using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,6 +13,7 @@ namespace SilksongCustomAudio
     {
         //+++++不应用boss死亡立刻停止音频的场景+++++
         private static string dualBossSceneName = "Dock_09";
+        private static string bellBossSceneName = "Bellway_Centipede_Arena";
         //+++++++++++++++
 
         //Hook设置布尔值SetBoolValue行为
@@ -66,6 +68,7 @@ namespace SilksongCustomAudio
         }
 
         //Hook检查多个布尔值是否为true BoolAllTrue行为
+        //控制监工兄弟音乐停止
         [HarmonyPostfix]
         [HarmonyPatch(typeof(BoolAllTrue), nameof(BoolAllTrue.OnEnter))]
         private static void BoolAllTrue_OnEnter_Postfix(BoolAllTrue __instance)
@@ -94,6 +97,58 @@ namespace SilksongCustomAudio
                 CustomAudio.staticLogger?.LogInfo("双人Boss都已击败，音乐END事件触发，停止自制音频");
 
                 BossAudioManager.StopAllCustomAudio(0.5f);
+            }
+        }
+        //控制BellEater音频切换
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(BoolAllTrue), nameof(BoolAllTrue.OnUpdate))]
+        private static void BoolAllTrue_OnUpdate_Postfix(BoolAllTrue __instance)
+        {
+
+            string bossName = DetectBossName(__instance.Fsm);
+            if (bossName != "Bell Eater") return;
+
+            //检查两个条件是否都为真
+            bool allTrue = true;
+
+            foreach (var variable in __instance.boolVariables)
+            {
+                if (variable?.Value != true)
+                {
+                    allTrue = false;
+                    break;
+                }
+            }
+            if (allTrue)
+            {
+                BossAudioManager.OnVariableChanged(
+                    bossName,
+                    __instance.sendEvent.Name,
+                    true
+                    );
+            }
+        }
+
+        //Hook从全局对象池中放置对象SpawnObjectFromGlobalPool行为
+        //控制BellEater音频停止
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(SpawnObjectFromGlobalPool), "OnEnter")]
+        private static void PlayAudioEvent_OnEnter_Postfix(SpawnObjectFromGlobalPool __instance)
+        {
+            string bossName = DetectBossName(__instance.Fsm);
+            if (bossName != "Bell Eater") return;
+
+            //检查播放的音频事件名称
+            GameObject prefab = __instance.gameObject?.Value;
+            if (prefab != null)
+            {
+                string prefabName = prefab.name;
+
+                if (prefabName == "Boss Death FinalHit")
+                {
+                    CustomAudio.staticLogger?.LogInfo("检测到Bell Eater死亡特效生成，停止自制音频");
+                    BossAudioManager.StopAllCustomAudio(0f);
+                }
             }
         }
 
@@ -139,6 +194,22 @@ namespace SilksongCustomAudio
                         }
                     }
                 }
+
+                if(__instance.sendEvent.Value == "CORE DAMAGE READY")
+                {
+                    CustomAudio.staticLogger?.LogInfo("检测到炽焰核心事件，触发亵渎天神音频播放");
+                    BossAudioManager.OnVariableChanged(
+                        bossName,
+                        __instance.sendEvent.Value,
+                        true
+                        );
+                }
+
+                if (__instance.sendEvent.Value == "FINAL BREAK")
+                {
+                    CustomAudio.staticLogger?.LogInfo("检测到炽焰之父死亡，音频停止");
+                    BossAudioManager.StopAllCustomAudio(0.5f);
+                }
             }
         }
         private static IEnumerator DelayedPhase3Audio(float delay, string bossName)
@@ -170,7 +241,7 @@ namespace SilksongCustomAudio
             string sceneName = SceneManager.GetActiveScene().name;
 
             //如果不是双Boss场景则停止所有自制音频
-            if (sceneName != dualBossSceneName)
+            if (sceneName != dualBossSceneName && sceneName != bellBossSceneName)
             {
                 CustomAudio.staticLogger?.LogInfo("Boss被击败，停止自制音频");
                 BossAudioManager.StopAllCustomAudio(0.5f);
@@ -178,7 +249,7 @@ namespace SilksongCustomAudio
             }
 
             //双Boss场景特殊处理
-            CustomAudio.staticLogger?.LogInfo($"{__instance.gameObject.name}被击败，等待另一个Boss死亡后再停止音频");
+            CustomAudio.staticLogger?.LogInfo($"{__instance.gameObject.name}被击败，但不停止音频");
 
         }
 
@@ -194,6 +265,13 @@ namespace SilksongCustomAudio
 
             if (gameObjectName.Contains("Dock Guard Slasher"))
                 return "Dock Guard";
+
+            if (gameObjectName.Contains("Centipede Control"))
+                return "Bell Eater";
+
+            if(gameObjectName.Contains("Wisp Pyre Effigy"))
+                return "Fire Father";
+
             //...待添加
 
             return null;

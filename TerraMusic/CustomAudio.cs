@@ -163,7 +163,7 @@ namespace SilksongCustomAudio
                 }
                 else
                 {
-                   Logger.LogWarning($"注册流式OGG失败，无法创建AudioClip：{fileName}");
+                    Logger.LogWarning($"注册流式OGG失败，无法创建AudioClip：{fileName}");
                     return false;
                 }
             }
@@ -324,8 +324,8 @@ namespace SilksongCustomAudio
         {
             if (TryReplaceAudio(__instance, out AudioClip replacement))
             {
-                __instance.clip = replacement;
-            }
+                    __instance.clip = replacement;
+                }
         }
 
         [HarmonyPrefix]
