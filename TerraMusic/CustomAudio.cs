@@ -157,7 +157,7 @@ namespace SilksongCustomAudio
                     AudioDictionary[fileName] = clip;//流式clip，没有预加载数据
 
                     var fileInfo = new FileInfo(filePath);
-                    Logger.LogDebug($"已注册流式OGG：{fileName} （{fileInfo.Length / 1024}KB）");
+                    //Logger.LogDebug($"已注册流式OGG：{fileName} （{fileInfo.Length / 1024}KB）");
 
                     return true;
                 }
@@ -272,7 +272,7 @@ namespace SilksongCustomAudio
                 string sceneSpecificName = $"{originalName}_{currentScene}";
                 if (AudioDictionary.TryGetValue(sceneSpecificName, out replacementClip))
                 {
-                    staticLogger?.LogInfo($"使用场景特定音频：{sceneSpecificName}");
+                    //staticLogger?.LogInfo($"使用场景特定音频：{sceneSpecificName}");
                     return true;
                 }
             }
@@ -303,7 +303,7 @@ namespace SilksongCustomAudio
                 string sceneSpecificName = $"{originalName}_{currentScene}";
                 if (AudioDictionary.TryGetValue(sceneSpecificName, out replacementClip))
                 {
-                    staticLogger?.LogInfo($"使用场景特定音频：{sceneSpecificName}");
+                    //staticLogger?.LogInfo($"使用场景特定音频：{sceneSpecificName}");
                     return true;
                 }
             }

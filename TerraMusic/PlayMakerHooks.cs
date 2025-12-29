@@ -56,7 +56,7 @@ namespace SilksongCustomAudio
 
                 if (allConditionsMet && !string.IsNullOrEmpty(__instance.trueEvent.Name))
                 {
-                    CustomAudio.staticLogger?.LogInfo($"Boss {bossName} BoolTestMulti 触发事件：{__instance.trueEvent.Name}");
+                    //CustomAudio.staticLogger?.LogInfo($"Boss {bossName} BoolTestMulti 触发事件：{__instance.trueEvent.Name}");
 
                     BossAudioManager.OnVariableChanged(
                         bossName,
@@ -94,7 +94,7 @@ namespace SilksongCustomAudio
 
             if (allDefeated)
             {
-                CustomAudio.staticLogger?.LogInfo("双人Boss都已击败，音乐END事件触发，停止自制音频");
+                //CustomAudio.staticLogger?.LogInfo("双人Boss都已击败，音乐END事件触发，停止自制音频");
 
                 BossAudioManager.StopAllCustomAudio(0.5f);
             }
@@ -146,7 +146,7 @@ namespace SilksongCustomAudio
 
                 if (prefabName == "Boss Death FinalHit")
                 {
-                    CustomAudio.staticLogger?.LogInfo("检测到Bell Eater死亡特效生成，停止自制音频");
+                    //CustomAudio.staticLogger?.LogInfo("检测到Bell Eater死亡特效生成，停止自制音频");
                     BossAudioManager.StopAllCustomAudio(0f);
                 }
             }
@@ -178,13 +178,13 @@ namespace SilksongCustomAudio
             {
                 if (__instance.sendEvent.Value == "STOP")
                 {
-                    CustomAudio.staticLogger?.LogInfo("检测到STOP事件，触发音频淡出");
+                    //CustomAudio.staticLogger?.LogInfo("检测到STOP事件，触发音频淡出");
                     BossAudioManager.StopAllCustomAudio(0.5f);
 
                     //当选定boss是Lost Lace时有特殊逻辑
                     if (bossName == "Lost Lace")
                     {
-                        CustomAudio.staticLogger?.LogInfo($"检测到Lost Lace的STOP，提前播放Phase 3音频");
+                        //CustomAudio.staticLogger?.LogInfo($"检测到Lost Lace的STOP，提前播放Phase 3音频");
 
                         //延迟一小会确保Phase 2音频完全停止
                         var gameManager = UnityEngine.Object.FindObjectOfType<GameManager>();
@@ -197,7 +197,7 @@ namespace SilksongCustomAudio
 
                 if(__instance.sendEvent.Value == "CORE DAMAGE READY")
                 {
-                    CustomAudio.staticLogger?.LogInfo("检测到炽焰核心事件，触发亵渎天神音频播放");
+                    //CustomAudio.staticLogger?.LogInfo("检测到炽焰核心事件，触发亵渎天神音频播放");
                     BossAudioManager.OnVariableChanged(
                         bossName,
                         __instance.sendEvent.Value,
@@ -207,7 +207,7 @@ namespace SilksongCustomAudio
 
                 if (__instance.sendEvent.Value == "FINAL BREAK")
                 {
-                    CustomAudio.staticLogger?.LogInfo("检测到炽焰之父死亡，音频停止");
+                    //CustomAudio.staticLogger?.LogInfo("检测到炽焰之父死亡，音频停止");
                     BossAudioManager.StopAllCustomAudio(0.5f);
                 }
             }
@@ -228,7 +228,7 @@ namespace SilksongCustomAudio
             BossAudioManager.CleanupInvalidSources();
 
             //切换场景时重置
-            CustomAudio.staticLogger?.LogInfo("场景已切换，重置状态");
+            //CustomAudio.staticLogger?.LogInfo("场景已切换，重置状态");
             BossAudioManager.ResetAllBossStates();
         }
 
@@ -243,13 +243,13 @@ namespace SilksongCustomAudio
             //如果不是双Boss场景则停止所有自制音频
             if (sceneName != dualBossSceneName && sceneName != bellBossSceneName)
             {
-                CustomAudio.staticLogger?.LogInfo("Boss被击败，停止自制音频");
+                //CustomAudio.staticLogger?.LogInfo("Boss被击败，停止自制音频");
                 BossAudioManager.StopAllCustomAudio(0.5f);
                 return;
             }
 
             //双Boss场景特殊处理
-            CustomAudio.staticLogger?.LogInfo($"{__instance.gameObject.name}被击败，但不停止音频");
+            //CustomAudio.staticLogger?.LogInfo($"{__instance.gameObject.name}被击败，但不停止音频");
 
         }
 

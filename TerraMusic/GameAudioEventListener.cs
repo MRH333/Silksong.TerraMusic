@@ -23,13 +23,13 @@ namespace SilksongCustomAudio
         ///</summary>
         public static void Initialize()
         {
-            CustomAudio.staticLogger?.LogInfo("初始化游戏音频事件监听器");
+            //CustomAudio.staticLogger?.LogInfo("初始化游戏音频事件监听器");
 
             //初始获取当前音量设置
             UpdateVolumeFromGameSettings();
 
             UpdateCustomAudioVolumes();
-            CustomAudio.staticLogger?.LogInfo("初始音量已应用到自制音频");
+            //CustomAudio.staticLogger?.LogInfo("初始音量已应用到自制音频");
         }
 
         //======功能1：角色死亡时停止======
@@ -37,7 +37,7 @@ namespace SilksongCustomAudio
         [HarmonyPatch(typeof(GameManager), nameof(GameManager.PlayerDead))]
         private static void HealthManeger_Die_Postfix()
         {
-            CustomAudio.staticLogger?.LogInfo("玩家死亡，立刻停止自制音频");
+            //CustomAudio.staticLogger?.LogInfo("玩家死亡，立刻停止自制音频");
             BossAudioManager.StopAllCustomAudio(0.1f);
         }
 
@@ -47,7 +47,7 @@ namespace SilksongCustomAudio
         private static void MenuAudioSlider_SetMasterLevel_Postfix(float masterLevel)
         {
             lastMasterVolume = ConvertSliderToPerceivedVolume(masterLevel / 10f);
-            CustomAudio.staticLogger?.LogInfo($"总音量变化：原始= {masterLevel}，转换后= {lastMasterVolume}");
+            //CustomAudio.staticLogger?.LogInfo($"总音量变化：原始= {masterLevel}，转换后= {lastMasterVolume}");
             UpdateCustomAudioVolumes();
         }
 
@@ -56,7 +56,7 @@ namespace SilksongCustomAudio
         private static void MenuAudioSlider_SetMusicLevel_Postfix(float musicLevel)
         {
             lastMusicVolume = ConvertSliderToPerceivedVolume(musicLevel / 10f);
-            CustomAudio.staticLogger?.LogInfo($"音乐音量变化：原始= {musicLevel}，转换后= {lastMusicVolume}");
+            //CustomAudio.staticLogger?.LogInfo($"音乐音量变化：原始= {musicLevel}，转换后= {lastMusicVolume}");
             UpdateCustomAudioVolumes();
         }
 
@@ -84,12 +84,12 @@ namespace SilksongCustomAudio
             if (!isNowPaused)
             {
                 //游戏刚刚暂停
-                CustomAudio.staticLogger?.LogInfo("游戏暂停，降低自制音频音量");
+                //CustomAudio.staticLogger?.LogInfo("游戏暂停，降低自制音频音量");
                 SetCustomAudioVolumeMultiplier(pauseVolumeMultiplier);
             }
             else if (isNowPaused)
             {
-                CustomAudio.staticLogger?.LogInfo("游戏恢复，恢复自制音频音量");
+                //CustomAudio.staticLogger?.LogInfo("游戏恢复，恢复自制音频音量");
                 SetCustomAudioVolumeMultiplier(1f);
             }
         }
@@ -165,7 +165,7 @@ namespace SilksongCustomAudio
         private static void UpdateCustomAudioVolumes()
         {
             currentBaseVolume = lastMasterVolume * lastMusicVolume;
-            CustomAudio.staticLogger?.LogInfo($"更新存储的音量：{currentBaseVolume}");
+            //CustomAudio.staticLogger?.LogInfo($"更新存储的音量：{currentBaseVolume}");
 
             BossAudioManager.SetAllCustomAudioBaseVolume(currentBaseVolume);
 

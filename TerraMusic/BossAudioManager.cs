@@ -229,7 +229,7 @@ namespace SilksongCustomAudio
             {
                 bossConfigs[config.BossName] = config;
                 bossStates[config.BossName] = new BossState();
-                CustomAudio.staticLogger?.LogInfo($"已添加音频配置到Boss：{config.BossName}");
+                //CustomAudio.staticLogger?.LogInfo($"已添加音频配置到Boss：{config.BossName}");
             }
         }
 
@@ -328,7 +328,7 @@ namespace SilksongCustomAudio
             state.IsAudioSwitching = true;
             state.CurrentPhase = phaseName;
 
-            CustomAudio.staticLogger?.LogInfo($"正在切换Boss {bossName} 到 {phaseName} 音频");
+            //CustomAudio.staticLogger?.LogInfo($"正在切换Boss {bossName} 到 {phaseName} 音频");
 
             //停止原音频
             if (config.StopOriginalAudio && !string.IsNullOrEmpty(config.OriginalAudioName))
@@ -362,7 +362,7 @@ namespace SilksongCustomAudio
                         source.Stop();
                     }
 
-                    CustomAudio.staticLogger?.LogInfo($"停止音频：{source.clip.name}");
+                    //CustomAudio.staticLogger?.LogInfo($"停止音频：{source.clip.name}");
                 }
             }
         }
@@ -370,7 +370,7 @@ namespace SilksongCustomAudio
         {
             if (!CustomAudio.AudioDictionary.TryGetValue(audioName, out AudioClip clip))
             {
-                CustomAudio.staticLogger?.LogWarning($"没有找到匹配的音频：{audioName}");
+                //CustomAudio.staticLogger?.LogWarning($"没有找到匹配的音频：{audioName}");
                 return;
             }
 
@@ -381,7 +381,7 @@ namespace SilksongCustomAudio
                 {
                     if (existingInfo.Source.isPlaying)
                     {
-                        CustomAudio.staticLogger?.LogInfo($"音频已在播放：{audioName}");
+                        //CustomAudio.staticLogger?.LogInfo($"音频已在播放：{audioName}");
                         return;
                     }
 
@@ -402,7 +402,7 @@ namespace SilksongCustomAudio
                         existingInfo.Source.Play();
                     }
 
-                    CustomAudio.staticLogger?.LogInfo($"重新播放自制音频：{audioName}");
+                    //CustomAudio.staticLogger?.LogInfo($"重新播放自制音频：{audioName}");
                     return;
                 }
                 else
@@ -438,7 +438,7 @@ namespace SilksongCustomAudio
                 source.Play();
             }
 
-            CustomAudio.staticLogger?.LogInfo($"正在播放自制音频：{audioName}");
+            //CustomAudio.staticLogger?.LogInfo($"正在播放自制音频：{audioName}");
         }
 
 
@@ -499,7 +499,7 @@ namespace SilksongCustomAudio
                     {
                         kvp.Value.Source.Stop();
                     }
-                    CustomAudio.staticLogger?.LogInfo($"停止自制音频：{kvp.Key}");
+                    //CustomAudio.staticLogger?.LogInfo($"停止自制音频：{kvp.Key}");
                 }
             }
         }
@@ -530,7 +530,7 @@ namespace SilksongCustomAudio
                 kvp.Value.IsAudioSwitching = false;
             }
 
-            CustomAudio.staticLogger?.LogInfo("重置所有Boss状态");
+            //CustomAudio.staticLogger?.LogInfo("重置所有Boss状态");
         }
 
         ////+++++获取所有自定义音频源（供事件监听器使用）+++++

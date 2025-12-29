@@ -55,7 +55,7 @@ namespace SilksongCustomAudio
                     (int position) => OnAudioSeek(filePath, position)//定位回调
                     );
 
-                CustomAudio.staticLogger?.LogInfo($"创建流式OGG AudioClip：{clipName}（{info.SamplesPerChannel / info.SampleRate:F1}）秒");
+                //CustomAudio.staticLogger?.LogInfo($"创建流式OGG AudioClip：{clipName}（{info.SamplesPerChannel / info.SampleRate:F1}）秒");
 
                 return clip;
             }
@@ -103,7 +103,7 @@ namespace SilksongCustomAudio
                 //=====处理文件结束（神吞BGM循环）======
                 if (samplesRead == 0 && isDevourerPhase2)
                 {
-                    CustomAudio.staticLogger?.LogInfo($"神吞BGM再次循环结束，重置到循环起点");
+                    //CustomAudio.staticLogger?.LogInfo($"神吞BGM再次循环结束，重置到循环起点");
                     reader.SeekTo(DevourerPhase2_LoopStartSample);
                     samplesRead = reader.ReadSamples(data, 0, data.Length);
                 }
@@ -137,11 +137,11 @@ namespace SilksongCustomAudio
                     //+++++判断是否是神吞BGM并处理+++++
                     if (isDevourerPhase2)
                     {
-                        CustomAudio.staticLogger?.LogInfo($"神吞BGM检测到Seek请求: {position}样本");
+                        //CustomAudio.staticLogger?.LogInfo($"神吞BGM检测到Seek请求: {position}样本");
                         if (DevourerPhase2SeekedCount == 1)
                         {
                             reader.SeekTo(DevourerPhase2_LoopStartSample);
-                            CustomAudio.staticLogger?.LogInfo($"神吞BGM第二次Seek，定位到循环点: {DevourerPhase2_LoopStartSample}");
+                            //CustomAudio.staticLogger?.LogInfo($"神吞BGM第二次Seek，定位到循环点: {DevourerPhase2_LoopStartSample}");
                             DevourerPhase2SeekedCount++;
 
                             return;
@@ -149,12 +149,12 @@ namespace SilksongCustomAudio
                         else if (DevourerPhase2SeekedCount > 1)
                         {
                             //reader.SeekTo(DevourerPhase2_LoopStartSample);
-                            CustomAudio.staticLogger?.LogInfo($"神吞BGM多次Seek，不做任何操作");
+                            //CustomAudio.staticLogger?.LogInfo($"神吞BGM多次Seek，不做任何操作");
                             return;
                         }
                         else
                         {
-                            CustomAudio.staticLogger?.LogInfo($"神吞BGM首次Seek，允许正常定位");
+                            //CustomAudio.staticLogger?.LogInfo($"神吞BGM首次Seek，允许正常定位");
                             DevourerPhase2SeekedCount++;
                         }
                     }
